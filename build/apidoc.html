@@ -1,0 +1,279 @@
+<div class="apidocDiv">
+<style>
+/*csslint
+*/
+.apidocDiv {
+    background: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.apidocDiv a[href] {
+    color: #33f;
+    font-weight: bold;
+    text-decoration: none;
+}
+.apidocDiv a[href]:hover {
+    text-decoration: underline;
+}
+.apidocCodeCommentSpan {
+    background: #bbf;
+    color: #000;
+    display: block;
+}
+.apidocCodeKeywordSpan {
+    color: #d00;
+    font-weight: bold;
+}
+.apidocCodePre {
+    background: #eef;
+    border: 1px solid;
+    color: #777;
+    padding: 5px;
+    white-space: pre-wrap;
+}
+.apidocFooterDiv {
+    margin-top: 20px;
+    text-align: center;
+}
+.apidocModuleLi {
+    margin-top: 10px;
+}
+.apidocSectionDiv {
+    border-top: 1px solid;
+    margin-top: 20px;
+}
+.apidocSignatureSpan {
+    color: #777;
+    font-weight: bold;
+}
+</style>
+<h1>api documentation for
+    <a
+
+        href="https://github.com/dreamerslab/node.rmdir"
+
+    >rmdir (v1.2.0)</a>
+</h1>
+<h4>Remove all files in the given path recursively</h4>
+<div class="apidocSectionDiv"><a
+    href="#apidoc.tableOfContents"
+    id="apidoc.tableOfContents"
+><h1>table of contents</h1></a><ol>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.rmdir">module rmdir</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.rmdir.rmdir">
+            function <span class="apidocSignatureSpan"></span>rmdir
+            <span class="apidocSignatureSpan">(dir, options, callback)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.rmdir.toString">
+            function <span class="apidocSignatureSpan">rmdir.</span>toString
+            <span class="apidocSignatureSpan">()</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <span class="apidocSignatureSpan">string <span class="apidocSignatureSpan">rmdir.</span>version</span>
+
+        </li>
+
+    </ol></li>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.rmdir.toString">module rmdir.toString</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.rmdir.toString.toString">
+            function <span class="apidocSignatureSpan">rmdir.</span>toString
+            <span class="apidocSignatureSpan">()</span>
+            </a>
+
+        </li>
+
+    </ol></li>
+
+</ol></div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.rmdir" id="apidoc.module.rmdir">module rmdir</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.rmdir.rmdir" id="apidoc.element.rmdir.rmdir">
+        function <span class="apidocSignatureSpan"></span>rmdir
+        <span class="apidocSignatureSpan">(dir, options, callback)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">function rmdir(dir, options, callback) {
+  if (typeof options === &#x27;undefined&#x27;) {
+    callback = function () {};
+    options = {};
+  }
+
+  if (typeof options === &#x27;function&#x27;) {
+    callback = options;
+    options = {};
+  }
+
+  var xfs = options.fs || fs;
+
+  xfs.lstat(dir, function (err, stat) {
+    var is_dir = stat &#x26;&#x26; stat.isDirectory();
+    var _dir = is_dir ? dir + &#x27;/&#x27; : dir;
+    var _files = [];
+    var _dirs = [];
+
+    if (err) return callback(err, _dirs, _files);
+
+    if (!is_dir) {
+      return xfs.unlink(_dir, function (err) {
+        return err ? callback(err, _dirs, _files) : callback(null, _dirs, _files);
+      });
+    }
+
+    xfs.readdir(_dir, function (err, files) {
+      var pending;
+
+      if (err) return callback(err);
+
+      pending = files.length;
+
+      _dirs.push(_dir);
+
+      if (!pending) {
+        return xfs.rmdir(_dir, function (err) {
+          return err ? callback(err, _dirs, _files) : callback(null, _dirs, _files);
+        });
+      }
+
+      files.forEach(function (file) {
+        file = _dir + file;
+
+        xfs.lstat(file, function (err, stat) {
+          function rm_all_dirs(callback) {
+            var flow = new Flow();
+
+            if (!--pending) {
+              if (!_dirs.length) return callback();
+
+              _dirs.forEach(function (dir) {
+                flow.parallel(function (ready) {
+                  xfs.exists(dir, function (exists) {
+                    if (!exists) return ready();
+
+                    xfs.rmdir(dir, function (err) {
+                      if (err) return ready(err);
+
+                      ready();
+                    });
+                  });
+                });
+              });
+
+              flow.join().
+              error(function (err) {
+                if (err) callback(err, _dirs, _files);
+              }).
+              end(function () {
+                callback(null, _dirs, _files);
+              });
+            }
+          }
+
+          if (stat &#x26;&#x26; stat.isDirectory()) {
+            _dirs.push(file);
+
+            rmdir(file, function (err, dirs, files) {
+              _files = _files.concat(files);
+
+              rm_all_dirs(callback);
+            });
+
+            return;
+          }
+
+          _files.push(file);
+          xfs.unlink(file, function (err) {
+            if (err) return callback(err);
+
+            rm_all_dirs(callback);
+          });
+        });
+      });
+    });
+  });
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+
+&#x3e; Require the module before using
+
+var rmdir = require(&#x27;rmdir&#x27;);
+
+### rmdir(path, [options], [callback]);
+
+You can optionally pass in an alternate fs implementation by passing in `options.fs`.Your implementation should have `fs.lstat(path
+, callback)`, `fs.unlink(path, callback)`, `fs.readdir(path, callback)`, `fs.<span class="apidocCodeKeywordSpan">rmdir</span>(path
+, callback)`, and `fs.exists(path, callback)` implemented.
+
+#### Arguments
+
+&#x3e; path
+
+type: String
+desc: The path to be clear.
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.element.rmdir.toString" id="apidoc.element.rmdir.toString">
+        function <span class="apidocSignatureSpan">rmdir.</span>toString
+        <span class="apidocSignatureSpan">()</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">toString = function () {
+    return text;
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    </ul>
+
+
+
+
+</div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.rmdir.toString" id="apidoc.module.rmdir.toString">module rmdir.toString</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.rmdir.toString.toString" id="apidoc.element.rmdir.toString.toString">
+        function <span class="apidocSignatureSpan">rmdir.</span>toString
+        <span class="apidocSignatureSpan">()</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">function toString() { [native code] }</pre></li>
+    <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    </ul>
+
+
+</div>
+
+<div class="apidocFooterDiv">
+    [ this document was created with
+    <a href="https://github.com/kaizhu256/node-utility2" target="_blank">utility2</a>
+    ]
+</div>
+</div>
