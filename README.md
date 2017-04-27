@@ -1,6 +1,7 @@
 # npmdoc-rmdir
 
-api documentation for  [rmdir (v1.2.0)](https://github.com/dreamerslab/node.rmdir)  [![npm package](https://img.shields.io/npm/v/npmdoc-rmdir.svg?style=flat-square)](https://www.npmjs.org/package/npmdoc-rmdir) [![travis-ci.org build-status](https://api.travis-ci.org/npmdoc/node-npmdoc-rmdir.svg)](https://travis-ci.org/npmdoc/node-npmdoc-rmdir)
+#### basic api documentation for  [rmdir (v1.2.0)](https://github.com/dreamerslab/node.rmdir)  [![npm package](https://img.shields.io/npm/v/npmdoc-rmdir.svg?style=flat-square)](https://www.npmjs.org/package/npmdoc-rmdir) [![travis-ci.org build-status](https://api.travis-ci.org/npmdoc/node-npmdoc-rmdir.svg)](https://travis-ci.org/npmdoc/node-npmdoc-rmdir)
+
 #### Remove all files in the given path recursively
 
 [![NPM](https://nodei.co/npm/rmdir.png?downloads=true&downloadRank=true&stars=true)](https://www.npmjs.com/package/rmdir)
@@ -88,7 +89,8 @@ api documentation for  [rmdir (v1.2.0)](https://github.com/dreamerslab/node.rmdi
     "scripts": {
         "test": "node test/run.js"
     },
-    "version": "1.2.0"
+    "version": "1.2.0",
+    "bin": {}
 }
 ```
 
